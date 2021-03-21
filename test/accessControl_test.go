@@ -3,7 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Monkey-Mouse/go-abac"
+	"github.com/Monkey-Mouse/go-abac/abac"
 	"log"
 	"os"
 )
