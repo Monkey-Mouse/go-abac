@@ -20,6 +20,16 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-
+ 
     - name: Test
       run: go test -v ./...
+  
+    - name: CodeCov
+      uses: codecov/codecov-action@v1.3.1
+      with:
+        # Repository upload token - get it from codecov.io. Required only for private repositories
+        token: dc4b0456-e4dc-4f3c-aa0a-bc0aa89c532f
+      # run: bash <(curl -s https://codecov.io/bash)
+        
+        
+        
