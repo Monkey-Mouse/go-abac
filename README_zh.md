@@ -46,7 +46,8 @@ res := ac.Can(IQueryInfo{
 })
 // (bool)res = true/false
 ```
-
+## Related
+- [docs](docs)
 
 ##License
 go-abac is MIT licensed. See the [LICENSE](LICENSE) file for details.
