@@ -76,6 +76,15 @@ func (ac *AccessControl) SetGrant(info IAccessInfo) *GrantsType {
 	return &ac.Grants
 }
 
+// SetGrants
+//
+func (ac *AccessControl) SetGrants(infos ...IAccessInfo) *GrantsType {
+	for _, info := range infos {
+		ac.SetGrant(info)
+	}
+	return &ac.Grants
+}
+
 //GetGrants get all grants within a controller
 func (ac *AccessControl) GetGrants() GrantsType {
 	return ac.Grants
