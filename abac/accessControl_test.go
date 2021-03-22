@@ -78,7 +78,7 @@ func ExampleAccessControl_SetGrant() {
 	fmt.Println(ac)
 
 	//output:
-	//{"Grants":{}}{"Grants":{"sub":{"res":{"act":[{},{},{}]}}}}{ map[sub:map[res:map[act:[{1} {2} {3}]]]]}
+	//{"Grants":{}}{"Grants":{"sub":{"res":{"act":[{},{},{}]}}}}{map[sub:map[res:map[act:[{1} {2} {3}]]]]}
 }
 func ExampleAccessControl_Grant() {
 	var ac AccessControl
@@ -89,8 +89,8 @@ func ExampleAccessControl_Grant() {
 	fmt.Println(ac)
 
 	//output:
-	//{ map[]}
-	//{ map[test:map[]]}
+	//{map[]}
+	//{map[test:map[]]}
 }
 
 func ExampleAccessControl_GetGrants() {

@@ -22,7 +22,6 @@ type GrantsType map[SubjectType]ResourceGrantsType
 type ResourceGrantsType map[ResourceType]ActionGrantsType
 type ActionGrantsType map[ActionType]RulesType
 type AccessControl struct {
-	role   roleType `json:"role"`
 	Grants GrantsType
 }
 type IAccessInfo struct {
@@ -162,11 +161,6 @@ func (a *IAccessInfo) SetAction(action ActionType) *IAccessInfo {
 func (a *IAccessInfo) SetRule(rule RulesType) *IAccessInfo {
 	a.Rules = rule
 	return a
-}
-
-func (ac *AccessControl) Role(role roleType) *AccessControl {
-	ac.role = role
-	return ac
 }
 
 // Can  check related rule
