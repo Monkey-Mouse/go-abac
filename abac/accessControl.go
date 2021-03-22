@@ -1,10 +1,16 @@
 package abac
 
+type SubjectEntity interface{}
+type ResourceEntity interface{}
+
 type roleType string
 type SubjectType string
 type ResourceType string
 type ActionType string
-type RulesType []interface{}
+type RulesType []RuleType
+type RuleType interface {
+	JudgeRule() (bool, error)
+}
 type GrantsType map[SubjectType]ResourceGrantsType
 type ResourceGrantsType map[ResourceType]ActionGrantsType
 type ActionGrantsType map[ActionType]RulesType
