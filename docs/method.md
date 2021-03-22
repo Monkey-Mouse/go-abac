@@ -37,3 +37,30 @@ Construct an `AccessControl` instance by
 	}
 	ac.SetGrant(info)
 ```
+
+
+## Access
+
+### CreateAny()
+
+``` go
+	var ac = AccessControl{}
+	ac.Grants=make(GrantsType)
+	ac.Grants.Subject("foo").CreateAny(RulesType{},"bar","foo")
+
+
+	fmt.Println(ac)
+	//output:
+	//{map[foo:map[bar:map[create:any:[]] foo:map[create:any:[]]]]}
+```
+
+### Extend()
+
+``` go
+    var ac = AccessControl{}
+	ac.Grants=make(GrantsType)
+	ac.Grants.Subject("foo").CreateAny(RulesType{},"bar","foo").Extend(ac,"bar")
+	fmt.Println(ac)
+	//output:
+	//{map[bar:map[bar:map[create:any:[]] foo:map[create:any:[]]] foo:map[bar:map[create:any:[]] foo:map[create:any:[]]]]}
+```

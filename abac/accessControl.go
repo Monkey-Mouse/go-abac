@@ -71,13 +71,15 @@ func (ac *AccessControl) Grant(grantsType2 GrantsType) *GrantsType {
 	ac.Grants = grantsType2
 	return &ac.Grants
 }
+
+// SetGrant set one info for ac
 func (ac *AccessControl) SetGrant(info IAccessInfo) *GrantsType {
 	ac.Grants[info.Subject] = ResourceGrantsType{info.Resource: ActionGrantsType{info.Action: info.Rules}}
 	return &ac.Grants
 }
 
 // SetGrants
-//
+// set multi infos for ac
 func (ac *AccessControl) SetGrants(infos ...IAccessInfo) *GrantsType {
 	for _, info := range infos {
 		ac.SetGrant(info)
@@ -105,6 +107,9 @@ func (g GrantsType) GetSubject(subject SubjectType) ResourceGrantsType {
 
 //Subject get grants of a certain subject
 func (g GrantsType) Subject(subject SubjectType) ResourceGrantsType {
+	if !subject.IsZero() && g[subject] == nil {
+		g[subject] = make(ResourceGrantsType)
+	}
 	return g[subject]
 }
 
