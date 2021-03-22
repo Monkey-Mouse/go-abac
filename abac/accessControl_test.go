@@ -174,27 +174,38 @@ func TestAccessControl_Can(t *testing.T) {
 		}},
 	})
 
-	action1 := ac.GetGrants().GetSubject("foo").GetResource("bar").GetAction(ActionUpdate)
-
-	fmt.Println(action1)
-	fmt.Println(reflect.TypeOf(action1))
-	for _, action := range action1 {
-		if res, err := action.JudgeRule(); err != nil {
-			t.Error(err)
-		} else if res {
-			fmt.Println("pass")
-		} else {
-			fmt.Println("deny")
-		}
-		fmt.Println(reflect.TypeOf(action))
+	res := ac.Can(IQueryInfo{
+		Subject:  "foo",
+		Action:   ActionUpdate,
+		Resource: "bar",
+	})
+	if res {
+		fmt.Println("pass")
+	} else {
+		fmt.Println("deny")
 	}
-	//Output:
-	//{test map[]}
-	//{another map[]}
+}
 
-	//ac.Role("test")
-	//fmt.Println(ac)
-	//ac.Role("test").Role("another")
-	//fmt.Println(ac)
+func TestAccessControl_GetRules(t *testing.T) {
+	var foo AccessControl
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
 
+	rules := foo.GetRules(IQueryInfo{
+		Subject:  "account",
+		Action:   ActionCreate,
+		Resource: "book",
+	})
+	if rules == nil {
+		t.Errorf("rules come out to nil")
+	}
+	rules = foo.GetRules(IQueryInfo{
+		Subject:  "account",
+		Action:   ActionDelete,
+		Resource: "book",
+	})
+	if rules != nil {
+		t.Errorf("rules come out to be %v", rules)
+	}
 }

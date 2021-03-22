@@ -1,5 +1,7 @@
 package abac
 
+import "log"
+
 type SubjectEntity interface{}
 type ResourceEntity interface{}
 
@@ -25,10 +27,10 @@ type IAccessInfo struct {
 	Rules    RulesType    `json:"rules"`
 }
 
-type AcArgs struct {
-	Subject  string `json:"subject,omitempty" example:"user"`
-	Action   string `json:"action,omitempty" example:"delete"`
-	Resource string `json:"resource,omitempty" example:"blog"`
+type IQueryInfo struct {
+	Subject  SubjectType  `json:"subject,omitempty" example:"user"`
+	Action   ActionType   `json:"action,omitempty" example:"delete"`
+	Resource ResourceType `json:"resource,omitempty" example:"blog"`
 }
 
 // zero return zero value of SubjectType
@@ -104,15 +106,33 @@ func (ac *AccessControl) EnsureMap(info IAccessInfo) *AccessControl {
 	return ac
 }
 
+// EnsureMap check if the map to visit nil, if nil, make new one
+func (ac *AccessControl) CheckMap(info IQueryInfo) bool {
+
+	if ac.Grants == nil || ac.Grants[info.Subject] == nil || ac.Grants[info.Subject][info.Resource] == nil {
+		return false
+	}
+	return true
+}
+
 // AddRules append rules to subject
 func (ac *AccessControl) AddRules(info IAccessInfo) *GrantsType {
 	// in case of nil map
 	ac.EnsureMap(info)
-	//d:=ac.Grants[info.Subject][info.Resource][info.Action]
 
 	ac.Grants[info.Subject][info.Resource][info.Action] = append(ac.Grants[info.Subject][info.Resource][info.Action], info.Rules...)
 	return &ac.Grants
 }
+
+// GetRules get rules to subject
+func (ac *AccessControl) GetRules(info IQueryInfo) RulesType {
+	// in case of nil map
+	if ac.CheckMap(info) {
+		return ac.Grants[info.Subject][info.Resource][info.Action]
+	}
+	return nil
+}
+
 func (a *IAccessInfo) Set(info IAccessInfo) *IAccessInfo {
 	a = &IAccessInfo{
 		Subject:  info.Subject,
@@ -144,9 +164,19 @@ func (ac *AccessControl) Role(role roleType) *AccessControl {
 	return ac
 }
 
-func (ac *AccessControl) Can(args AcArgs) (res bool) {
-	//todo check related rule
-	//execute authorize handler
-	//get result
+// Can  check related rule
+//		execute authorize handler
+//		get result
+func (ac *AccessControl) Can(info IQueryInfo) (can bool) {
+	rules := ac.GetRules(info)
+	for _, rule := range rules {
+
+		if res, err := rule.JudgeRule(); err != nil {
+			log.Println(err)
+		} else if res {
+			return true
+		}
+	}
+
 	return false
 }
