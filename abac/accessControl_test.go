@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type FooRule struct {
@@ -30,6 +31,14 @@ type MyRule struct {
 
 func (m MyRule) JudgeRule() (bool, error) {
 	fmt.Println(m.R)
+	return true, nil
+}
+
+type TimeConsume struct {
+}
+
+func (m TimeConsume) JudgeRule() (bool, error) {
+	time.Sleep(time.Second * 1)
 	return true, nil
 }
 
@@ -171,6 +180,31 @@ func TestAccessControl_Can(t *testing.T) {
 		Rules: RulesType{MyRule{
 			S: "dili",
 			R: "dala",
+		}, TimeConsume{}},
+	})
+
+	res := ac.Can(IQueryInfo{
+		Subject:  "foo",
+		Action:   ActionUpdate,
+		Resource: "bar",
+	})
+	if res {
+		fmt.Println("pass")
+	} else {
+		fmt.Println("deny")
+	}
+}
+
+func ExampleAccessControl_Can() {
+	var ac AccessControl
+
+	ac.AddRules(IAccessInfo{
+		Subject:  "foo",
+		Action:   ActionUpdate,
+		Resource: "bar",
+		Rules: RulesType{MyRule{
+			S: "dili",
+			R: "dala",
 		}},
 	})
 
@@ -184,6 +218,9 @@ func TestAccessControl_Can(t *testing.T) {
 	} else {
 		fmt.Println("deny")
 	}
+	//output:
+	//dala
+	//pass
 }
 
 func TestAccessControl_GetRules(t *testing.T) {

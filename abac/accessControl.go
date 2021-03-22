@@ -1,6 +1,11 @@
 package abac
 
-import "log"
+import (
+	"context"
+	"log"
+	"sync"
+	"time"
+)
 
 type SubjectEntity interface{}
 type ResourceEntity interface{}
@@ -167,16 +172,50 @@ func (ac *AccessControl) Role(role roleType) *AccessControl {
 // Can  check related rule
 //		execute authorize handler
 //		get result
-func (ac *AccessControl) Can(info IQueryInfo) (can bool) {
+// use goroutine
+func (ac *AccessControl) Can(info IQueryInfo) (resc bool) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	rules := ac.GetRules(info)
+	return processRule(ctx, rules)
+}
+
+func processRule(ctx context.Context, rules RulesType) (pass bool) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	wg := new(sync.WaitGroup)
+	wg.Add(len(rules))
 	for _, rule := range rules {
-
-		if res, err := rule.JudgeRule(); err != nil {
-			log.Println(err)
-		} else if res {
-			return true
-		}
+		go func(rule RuleType, ctx context.Context) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if res, err := rule.JudgeRule(); err != nil {
+					log.Println(err)
+				} else if res {
+					cancel()
+					pass = res
+					return
+				}
+			}
+		}(rule, ctx)
 	}
+	wg.Wait()
+	return
+}
 
-	return false
+func testCtx(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+	select {
+	case <-ctx.Done():
+		return false, ctx.Err()
+	case <-time.After(1 * time.Minute):
+
+	}
+	print("here")
+	time.Sleep(time.Minute * 1)
+	return true, nil
 }
