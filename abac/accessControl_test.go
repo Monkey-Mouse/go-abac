@@ -116,6 +116,23 @@ func ExampleGrantsType_GetSubject() {
 	//map[book:map[create:[{has user role}]]]
 }
 
+func TestGrantsType_GetSubject(t *testing.T) {
+	var foo AccessControl
+	var subject1 = SubjectType("account")
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	getBefore := foo.GetGrants().GetSubject(subject1)
+
+	var res = foo.GetGrants().GetSubject(subject1)
+	res["book"] = ActionGrantsType{ActionUpdate: RulesType{FooRule{tips: "has user role"}}}
+	getAfter := foo.GetGrants().GetSubject(subject1)
+	if !reflect.DeepEqual(getBefore, getAfter) {
+		t.Errorf("get return reference of object, after %v != before %v", getAfter, getBefore)
+	}
+
+}
+
 func ExampleResourceGrantsType_GetResource() {
 	var foo AccessControl
 	var subject1 = SubjectType("account")

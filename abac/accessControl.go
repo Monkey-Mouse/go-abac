@@ -87,21 +87,52 @@ func (ac *AccessControl) SetGrants(infos ...IAccessInfo) *GrantsType {
 
 //GetGrants get all grants within a controller
 func (ac *AccessControl) GetGrants() GrantsType {
-	return ac.Grants
+	grants := make(GrantsType)
+	for key, value := range ac.Grants {
+		grants[key] = value
+	}
+	return grants
 }
 
-//GetSubject get all grants of a certain subject
+//GetSubject get grants of a certain subject
 func (g GrantsType) GetSubject(subject SubjectType) ResourceGrantsType {
+	resGrants := make(ResourceGrantsType)
+	for key, value := range g[subject] {
+		resGrants[key] = value
+	}
+	return resGrants
+}
+
+//Subject get grants of a certain subject
+func (g GrantsType) Subject(subject SubjectType) ResourceGrantsType {
 	return g[subject]
 }
 
 //GetResource get grants of a certain resource
 func (r ResourceGrantsType) GetResource(resource ResourceType) ActionGrantsType {
+	actGrants := make(ActionGrantsType)
+	for key, value := range r[resource] {
+		actGrants[key] = value
+	}
+	return actGrants
+}
+
+//Resource get grants of a certain resource
+func (r ResourceGrantsType) Resource(resource ResourceType) ActionGrantsType {
 	return r[resource]
 }
 
 //GetAction get all rules of a certain action
 func (a ActionGrantsType) GetAction(action ActionType) RulesType {
+	ruleGrants := make(RulesType, len(a[action]))
+	for i, rule := range a[action] {
+		ruleGrants[i] = rule
+	}
+	return ruleGrants
+}
+
+//Action get all rules of a certain action
+func (a ActionGrantsType) Action(action ActionType) RulesType {
 	return a[action]
 }
 
