@@ -5,15 +5,36 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
+	"testing"
 )
 
-var fooAC AccessControl
-var subject1 = SubjectType("account")
+type FooRule struct {
+	tips string
+}
+
+func (f FooRule) JudgeRule() (bool, error) {
+	return true, nil
+}
+func (f FooRule) setTips(tips string) {
+	f.tips = tips
+}
+func (f FooRule) getTips() string {
+	return f.tips
+}
+
+type MyRule struct {
+	S SubjectType
+	R ResourceType
+}
+
+func (m MyRule) JudgeRule() (bool, error) {
+	fmt.Println(m.R)
+	return true, nil
+}
 
 func init() {
-	fooAC.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{"has user role"}}},
-		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{"has primer user role"}}},
-	})
+
 }
 
 func ExampleAccessControl_SetGrant() {
@@ -25,7 +46,7 @@ func ExampleAccessControl_SetGrant() {
 		Subject:  "sub",
 		Action:   "act",
 		Resource: "res",
-		Rules:    []string{"1", "2", "3"},
+		Rules:    RulesType{FooRule{tips: "1"}, FooRule{tips: "2"}, FooRule{tips: "3"}},
 	}
 	res, err := json.Marshal(ac)
 	if err != nil {
@@ -48,7 +69,7 @@ func ExampleAccessControl_SetGrant() {
 	fmt.Println(ac)
 
 	//output:
-	//{"Grants":{}}{"Grants":{"sub":{"res":{"act":["1","2","3"]}}}}{ map[sub:map[res:map[act:[1 2 3]]]]}
+	//{"Grants":{}}{"Grants":{"sub":{"res":{"act":[{},{},{}]}}}}{ map[sub:map[res:map[act:[{1} {2} {3}]]]]}
 }
 func ExampleAccessControl_Grant() {
 	var ac AccessControl
@@ -64,44 +85,116 @@ func ExampleAccessControl_Grant() {
 }
 
 func ExampleAccessControl_GetGrants() {
-	fmt.Println(fooAC.GetGrants())
+	var foo AccessControl
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	fmt.Println(foo.GetGrants())
 
 	//output:
-	//map[account:map[book:map[create:[has user role]]] role:map[project:map[create:[has primer user role]]]]
+	//map[account:map[book:map[create:[{has user role}]]] role:map[project:map[create:[{has primer user role}]]]]
 }
 
 func ExampleGrantsType_GetSubject() {
-	fmt.Println(fooAC.GetGrants().GetSubject(subject1))
+	var foo AccessControl
+	var subject1 = SubjectType("account")
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	fmt.Println(foo.GetGrants().GetSubject(subject1))
 
 	//output:
-	//map[book:map[create:[has user role]]]
+	//map[book:map[create:[{has user role}]]]
 }
 
 func ExampleResourceGrantsType_GetResource() {
-	fmt.Println(fooAC.GetGrants().GetSubject(subject1).GetResource("book"))
+	var foo AccessControl
+	var subject1 = SubjectType("account")
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	fmt.Println(foo.GetGrants().GetSubject(subject1).GetResource("book"))
 
 	//output:
-	//map[create:[has user role]]
+	//map[create:[{has user role}]]
 }
 
 func ExampleActionGrantsType_GetAction() {
-	fmt.Println(fooAC.GetGrants().GetSubject(subject1).GetResource("book").GetAction(ActionDelete))
-	fmt.Println(fooAC.GetGrants().GetSubject(subject1).GetResource("book").GetAction(ActionCreate))
+	var foo AccessControl
+	var subject1 = SubjectType("account")
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	fmt.Println(foo.GetGrants().GetSubject(subject1).GetResource("book").GetAction(ActionDelete))
+	fmt.Println(foo.GetGrants().GetSubject(subject1).GetResource("book").GetAction(ActionCreate))
 
 	//output:
 	//[]
-	//[has user role]
+	//[{has user role}]
 }
 
-func ExampleAccessControl_Can() {
-	var ac AccessControl
-	ac.Role("test")
-	fmt.Println(ac)
-	ac.Role("test").Role("another")
-	fmt.Println(ac)
+func TestActionGrantsType_GetAction(t *testing.T) {
+	var foo AccessControl
+	foo.Grant(GrantsType{"account": ResourceGrantsType{"book": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has user role"}}}},
+		"role": ResourceGrantsType{"project": ActionGrantsType{ActionCreate: RulesType{FooRule{tips: "has primer user role"}}}},
+	})
+	newFoo := foo
+	if !reflect.DeepEqual(newFoo, foo) {
+		t.Errorf("%v not equal to %v", newFoo, foo)
+	}
+	if &newFoo == &foo {
+		t.Errorf("%v's pointer is equal to %v's", newFoo, foo)
+	}
+	newFoo.AddRules(IAccessInfo{
+		Subject:  "foo",
+		Action:   ActionUpdate,
+		Resource: "bar",
+		Rules:    RulesType{},
+	})
+	action1 := newFoo.GetGrants().GetSubject("foo").GetResource("bar").GetAction(ActionUpdate)
 
+	fmt.Println(action1)
+	fmt.Println(reflect.TypeOf(action1))
+	for _, action := range action1 {
+		fmt.Println(reflect.TypeOf(action))
+	}
+
+}
+
+func TestAccessControl_Can(t *testing.T) {
+	var ac AccessControl
+
+	ac.AddRules(IAccessInfo{
+		Subject:  "foo",
+		Action:   ActionUpdate,
+		Resource: "bar",
+		Rules: RulesType{MyRule{
+			S: "dili",
+			R: "dala",
+		}},
+	})
+
+	action1 := ac.GetGrants().GetSubject("foo").GetResource("bar").GetAction(ActionUpdate)
+
+	fmt.Println(action1)
+	fmt.Println(reflect.TypeOf(action1))
+	for _, action := range action1 {
+		if res, err := action.JudgeRule(); err != nil {
+			t.Error(err)
+		} else if res {
+			fmt.Println("pass")
+		} else {
+			fmt.Println("deny")
+		}
+		fmt.Println(reflect.TypeOf(action))
+	}
 	//Output:
 	//{test map[]}
 	//{another map[]}
+
+	//ac.Role("test")
+	//fmt.Println(ac)
+	//ac.Role("test").Role("another")
+	//fmt.Println(ac)
 
 }

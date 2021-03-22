@@ -4,6 +4,7 @@ for better extensible, the type of rules in the model(`RulesType`) is designed a
 we suggest user implementing handler method `JudgeRule()` to check if the request of subject satisfy the rule  
 and hereby, this package provides method `Can()` to return whether the request meet the rules above
 
+> [problem] not enough info for json serialize
 
 ## JudgeRule()(bool,error)
 
