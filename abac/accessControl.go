@@ -4,7 +4,7 @@ type roleType string
 type SubjectType string
 type ResourceType string
 type ActionType string
-type RulesType []string
+type RulesType []interface{}
 type GrantsType map[SubjectType]ResourceGrantsType
 type ResourceGrantsType map[ResourceType]ActionGrantsType
 type ActionGrantsType map[ActionType]RulesType
@@ -23,6 +23,36 @@ type AcArgs struct {
 	Subject  string `json:"subject,omitempty" example:"user"`
 	Action   string `json:"action,omitempty" example:"delete"`
 	Resource string `json:"resource,omitempty" example:"blog"`
+}
+
+// zero return zero value of SubjectType
+func (sT SubjectType) zero() SubjectType {
+	return ""
+}
+
+// IsZero check whether a variable of SubjectType is zero
+func (sT SubjectType) IsZero() bool {
+	return sT == sT.zero()
+}
+
+// zero return zero value of ResourceType
+func (rT ResourceType) zero() ResourceType {
+	return ""
+}
+
+// IsZero check whether a variable of ResourceType is zero
+func (rT ResourceType) IsZero() bool {
+	return rT == rT.zero()
+}
+
+// zero return zero value of ResourceType
+func (aT ActionType) zero() ActionType {
+	return ""
+}
+
+// IsZero check whether a variable of ResourceType is zero
+func (aT ActionType) IsZero() bool {
+	return aT == aT.zero()
 }
 
 func (ac *AccessControl) Grant(grantsType2 GrantsType) *GrantsType {
@@ -54,8 +84,26 @@ func (a ActionGrantsType) GetAction(action ActionType) RulesType {
 	return a[action]
 }
 
+// EnsureMap check if the map to visit nil, if nil, make new one
+func (ac *AccessControl) EnsureMap(info IAccessInfo) *AccessControl {
+	if ac.Grants == nil {
+		ac.Grants = make(GrantsType)
+	}
+	if !info.Subject.IsZero() && ac.Grants[info.Subject] == nil {
+		ac.Grants[info.Subject] = make(ResourceGrantsType)
+	}
+	if !info.Resource.IsZero() && ac.Grants[info.Subject][info.Resource] == nil {
+		ac.Grants[info.Subject][info.Resource] = make(ActionGrantsType)
+	}
+	return ac
+}
+
+// AddRules append rules to subject
 func (ac *AccessControl) AddRules(info IAccessInfo) *GrantsType {
+	// in case of nil map
+	ac.EnsureMap(info)
 	//d:=ac.Grants[info.Subject][info.Resource][info.Action]
+
 	ac.Grants[info.Subject][info.Resource][info.Action] = append(ac.Grants[info.Subject][info.Resource][info.Action], info.Rules...)
 	return &ac.Grants
 }
