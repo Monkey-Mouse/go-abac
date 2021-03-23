@@ -1,6 +1,7 @@
 package abac
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -32,6 +33,16 @@ type MyRule struct {
 func (m MyRule) JudgeRule() (bool, error) {
 	fmt.Println(m.R)
 	return true, nil
+}
+
+type FailRule struct {
+	S SubjectType
+	R ResourceType
+}
+
+func (m FailRule) JudgeRule() (bool, error) {
+	fmt.Println(m)
+	return false, nil
 }
 
 type TimeConsume struct {
@@ -261,5 +272,35 @@ func TestAccessControl_GetRules(t *testing.T) {
 	})
 	if rules != nil {
 		t.Errorf("rules come out to be %v", rules)
+	}
+}
+
+func Test_processRule(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		rules RulesType
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantPass bool
+	}{
+		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
+			FooRule{},
+			FailRule{},
+			FooRule{},
+		}}, wantPass: false},
+		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
+			FooRule{},
+			FooRule{},
+			FooRule{},
+		}}, wantPass: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotPass := processRule(tt.args.ctx, tt.args.rules); gotPass != tt.wantPass {
+				t.Errorf("processRule() = %v, want %v", gotPass, tt.wantPass)
+			}
+		})
 	}
 }
