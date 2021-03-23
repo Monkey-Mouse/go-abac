@@ -3,6 +3,7 @@ package abac
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -17,6 +18,21 @@ type FooRule struct {
 
 func (f FooRule) JudgeRule() (bool, error) {
 	return true, nil
+}
+
+type SlowRule struct {
+}
+
+func (f SlowRule) JudgeRule() (bool, error) {
+	time.Sleep(time.Hour)
+	return true, nil
+}
+
+type ErrRule struct {
+}
+
+func (f ErrRule) JudgeRule() (bool, error) {
+	return true, errors.New("Err")
 }
 func (f FooRule) setTips(tips string) {
 	f.tips = tips
@@ -36,12 +52,9 @@ func (m MyRule) JudgeRule() (bool, error) {
 }
 
 type FailRule struct {
-	S SubjectType
-	R ResourceType
 }
 
 func (m FailRule) JudgeRule() (bool, error) {
-	fmt.Println(m)
 	return false, nil
 }
 
@@ -288,6 +301,7 @@ func Test_processRule(t *testing.T) {
 		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
 			FooRule{},
 			FailRule{},
+			SlowRule{},
 			FooRule{},
 		}}, wantPass: false},
 		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
@@ -295,6 +309,12 @@ func Test_processRule(t *testing.T) {
 			FooRule{},
 			FooRule{},
 		}}, wantPass: true},
+		{name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
+			FooRule{},
+			ErrRule{},
+			SlowRule{},
+			FooRule{},
+		}}, wantPass: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
