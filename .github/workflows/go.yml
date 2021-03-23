@@ -2,34 +2,30 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.15
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
 
-    - name: Build
-      run: go build -v ./...
- 
-    - name: Test
-      run: go test -v ./...
-  
-    - name: CodeCov
-      uses: codecov/codecov-action@v1.3.1
-      with:
-        # Repository upload token - get it from codecov.io. Required only for private repositories
-        token: dc4b0456-e4dc-4f3c-aa0a-bc0aa89c532f
-      # run: bash <(curl -s https://codecov.io/bash)
-        
-        
-        
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: CodeCov
+        uses: codecov/codecov-action@v1.3.1
+        with:
+          # Repository upload token - get it from codecov.io. Required only for private repositories
+          # token: dc4b0456-e4dc-4f3c-aa0a-bc0aa89c532f
+          run: bash <(curl -s https://codecov.io/bash)
