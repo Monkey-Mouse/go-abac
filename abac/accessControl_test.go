@@ -55,6 +55,7 @@ type FailRule struct {
 }
 
 func (m FailRule) JudgeRule() (bool, error) {
+	time.Sleep(time.Second)
 	return false, nil
 }
 
@@ -299,17 +300,17 @@ func Test_processRule(t *testing.T) {
 		wantPass bool
 	}{
 		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
-			FooRule{},
 			FailRule{},
-			SlowRule{},
+			FailRule{},
+			FailRule{},
 			FooRule{},
 		}}, wantPass: true},
-		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
-			FailRule{}, FailRule{}, FailRule{}, FailRule{},
-		}}, wantPass: false},
-		{name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
-			ErrRule{}, ErrRule{}, ErrRule{}, ErrRule{}, ErrRule{},
-		}}, wantPass: false},
+		// {name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
+		// 	FailRule{}, FailRule{}, FailRule{}, FailRule{},
+		// }}, wantPass: false},
+		// {name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
+		// 	ErrRule{}, ErrRule{}, ErrRule{}, ErrRule{}, ErrRule{},
+		// }}, wantPass: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
