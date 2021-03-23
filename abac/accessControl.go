@@ -238,13 +238,13 @@ func processRule(ctx context.Context, rules RulesType) (pass bool) {
 		}(rule, ctx)
 	}
 	for i := 0; i < len(rules); i++ {
-		if d := <-doneChan; !d {
+		if d := <-doneChan; d {
 			cancel()
-			pass = false
+			pass = true
 			return
 		}
 	}
-	pass = true
+	pass = false
 	return
 }
 
