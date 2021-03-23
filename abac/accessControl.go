@@ -3,7 +3,6 @@ package abac
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -222,26 +221,30 @@ func (ac *AccessControl) Can(info IQueryInfo) (resc bool) {
 func processRule(ctx context.Context, rules RulesType) (pass bool) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	wg := new(sync.WaitGroup)
-	wg.Add(len(rules))
+	doneChan := make(chan bool)
 	for _, rule := range rules {
 		go func(rule RuleType, ctx context.Context) {
-			defer wg.Done()
+			var res bool
+			var err error
+			if res, err = rule.JudgeRule(); err != nil {
+				log.Println(err)
+				res = false
+			}
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				if res, err := rule.JudgeRule(); err != nil {
-					log.Println(err)
-				} else if res {
-					cancel()
-					pass = res
-					return
-				}
+			case doneChan <- res:
 			}
 		}(rule, ctx)
 	}
-	wg.Wait()
+	for i := 0; i < len(rules); i++ {
+		if d := <-doneChan; !d {
+			cancel()
+			pass = false
+			return
+		}
+	}
+	pass = true
 	return
 }
 
