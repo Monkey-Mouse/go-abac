@@ -16,7 +16,7 @@ AccessControl~IAccessInfo:Object  inner
 > which will eventually be committed to the underlying grants model.
 #### properties
 - action
-- possession
+- ~~possession~~
 - resource
 - subject
 - rules
@@ -30,6 +30,30 @@ AccessControl~IQueryInfo:Object  inner
 >
 #### properties
 - action
-- possession
+- ~~possession~~
 - resource
 - subject
+- context
+
+
+## ContextType
+``` go
+type ContextType interface {
+	Value(key interface{}) interface{}
+}
+```
+passed in `IQueryInfo` so that the context of a query action can be processed when Judging rules
+
+for example, you can implement this interface with map type, and return value of the map with given key
+``` go
+type DemoContext map[string]interface{}
+
+func(c DemoContext)Value(key interface{})interface{}{
+	if c!=nil{
+		return c[key.(string)]
+	}else{
+		return ""
+	}
+}
+
+```

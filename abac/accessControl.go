@@ -2,8 +2,6 @@ package abac
 
 import (
 	"context"
-	"log"
-	"time"
 )
 
 type SubjectEntity interface{}
@@ -16,6 +14,7 @@ type ActionType string
 type RulesType []RuleType
 type RuleType interface {
 	JudgeRule() (bool, error)
+	ProcessContext(ctx ContextType)
 }
 type GrantsType map[SubjectType]ResourceGrantsType
 type ResourceGrantsType map[ResourceType]ActionGrantsType
@@ -34,6 +33,7 @@ type IQueryInfo struct {
 	Subject  SubjectType  `json:"subject,omitempty" example:"user"`
 	Action   ActionType   `json:"action,omitempty" example:"delete"`
 	Resource ResourceType `json:"resource,omitempty" example:"blog"`
+	Context  ContextType  `json:"context,omitempty" example:"blog"`
 }
 
 // zero return zero value of SubjectType
@@ -218,46 +218,10 @@ func (ac *AccessControl) Can(info IQueryInfo) (resc bool) {
 	return processRule(ctx, rules)
 }
 
-func processRule(ctx context.Context, rules RulesType) (pass bool) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	doneChan := make(chan bool)
-	for _, rule := range rules {
-		go func(rule RuleType, ctx context.Context) {
-			var res bool
-			var err error
-			if res, err = rule.JudgeRule(); err != nil {
-				log.Println(err)
-				res = false
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case doneChan <- res:
-			}
-		}(rule, ctx)
-	}
-	for i := 0; i < len(rules); i++ {
-		if d := <-doneChan; !d {
-			cancel()
-			pass = false
-			return
-		}
-	}
-	pass = true
-	return
-}
-
-func testCtx(ctx context.Context) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-	select {
-	case <-ctx.Done():
-		return false, ctx.Err()
-	case <-time.After(1 * time.Minute):
-
-	}
-	print("here")
-	time.Sleep(time.Minute * 1)
-	return true, nil
+// CanAnd  check related rule
+//		execute authorize handler
+//		get result
+// logic: and(if any rule failed, can = false)
+func (ac *AccessControl) CanAnd(info IQueryInfo) (can bool) {
+	return andProcessRule(info.Context, ac.GetRules(info))
 }
