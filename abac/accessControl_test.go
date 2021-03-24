@@ -20,20 +20,28 @@ func (f FooRule) JudgeRule() (bool, error) {
 	return true, nil
 }
 
+func (f FooRule) ProcessContext(ctx ContextType) {
+}
+
 type SlowRule struct {
 }
 
-func (f SlowRule) JudgeRule() (bool, error) {
+func (r SlowRule) JudgeRule() (bool, error) {
 	time.Sleep(time.Hour)
 	return true, nil
+}
+func (r SlowRule) ProcessContext(ctx ContextType) {
 }
 
 type ErrRule struct {
 }
 
-func (f ErrRule) JudgeRule() (bool, error) {
+func (r ErrRule) JudgeRule() (bool, error) {
 	return true, errors.New("Err")
 }
+func (r ErrRule) ProcessContext(ctx ContextType) {
+}
+
 func (f FooRule) setTips(tips string) {
 	f.tips = tips
 }
@@ -50,11 +58,17 @@ func (m MyRule) JudgeRule() (bool, error) {
 	fmt.Println(m.R)
 	return true, nil
 }
+func (m MyRule) ProcessContext(ctx ContextType) {
+
+}
 
 type FailRule struct {
 }
 
-func (m FailRule) JudgeRule() (bool, error) {
+func (f FailRule) ProcessContext(ctx ContextType) {
+}
+
+func (f FailRule) JudgeRule() (bool, error) {
 	return false, nil
 }
 
@@ -65,9 +79,11 @@ func (m TimeConsume) JudgeRule() (bool, error) {
 	time.Sleep(time.Second * 1)
 	return true, nil
 }
+func (m TimeConsume) ProcessContext(ctx ContextType) {
+
+}
 
 func init() {
-
 }
 
 func ExampleAccessControl_SetGrant() {
@@ -299,21 +315,20 @@ func Test_processRule(t *testing.T) {
 		wantPass bool
 	}{
 		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
-			FooRule{},
 			FailRule{},
-			SlowRule{},
-			FooRule{},
+			FailRule{},
+			FailRule{},
 		}}, wantPass: false},
 		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
 			FooRule{},
 			FooRule{},
 			FooRule{},
+			SlowRule{},
+			FailRule{},
 		}}, wantPass: true},
 		{name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
-			FooRule{},
 			ErrRule{},
-			SlowRule{},
-			FooRule{},
+			ErrRule{},
 		}}, wantPass: false},
 	}
 	for _, tt := range tests {
