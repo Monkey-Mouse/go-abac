@@ -218,11 +218,10 @@ func (ac *AccessControl) Can(info IQueryInfo) (resc bool) {
 	return processRule(ctx, rules)
 }
 
-// Can  check related rule
+// CanAnd  check related rule
 //		execute authorize handler
 //		get result
-// use goroutine
-func (ac *AccessControl) CanAnd(info IQueryInfo, handler func(info interface{}) bool) (resc bool) {
-
-	return handler(info)
+// logic: and(if any rule failed, can = false)
+func (ac *AccessControl) CanAnd(info IQueryInfo) (can bool) {
+	return andProcessRule(info.Context, ac.GetRules(info))
 }

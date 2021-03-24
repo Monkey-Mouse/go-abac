@@ -10,6 +10,16 @@ type ContextType interface {
 	Value(key interface{}) interface{}
 }
 
+type DefaultContext map[string]interface{}
+
+func (c DefaultContext) Value(key interface{}) interface{} {
+	if c != nil {
+		return c[key.(string)]
+	} else {
+		return ""
+	}
+}
+
 func processRule(ctx context.Context, rules RulesType) (pass bool) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -38,6 +48,16 @@ func processRule(ctx context.Context, rules RulesType) (pass bool) {
 	}
 	pass = false
 	return
+}
+
+func andProcessRule(ctx ContextType, rules RulesType) bool {
+	for _, rule := range rules {
+		rule.ProcessContext(ctx)
+		if res, err := rule.JudgeRule(); err != nil || !res {
+			return false
+		}
+	}
+	return true
 }
 
 func testCtx(ctx context.Context) (bool, error) {

@@ -32,27 +32,71 @@ go get github.com/Monkey-Mouse/go-abac
 ```
 ## Usage
 
+### import 
 ``` go
 import 	"github.com/Monkey-Mouse/go-abac/abac"
 
 var ac AccessControl
+```
+### construct rule
 
-ac.AddRules(IAccessInfo{
-    Subject:  "foo",
-    Action:   ActionUpdate,
-    Resource: "bar",
-    Rules: RulesType{MyRule{
-        S: "dili",
-        R: "dala",
-    },},
-})
+``` go
+type DemoRule struct {
+	id string	`json:"id" example:"u2020"`
+}
 
-res := ac.Can(IQueryInfo{
-    Subject:  "foo",
-    Action:   ActionUpdate,
-    Resource: "bar",
-})
-// (bool)res = true/false
+func (r *DemoRule) ProcessContext(ctx abac.ContextType)  {
+	// implement ProcessContext() to use params in context
+	r.id=ctx.Value("id").(string)
+}
+func (r *DemoRule)JudgeRule()(bool,error) {
+        // you can define your own rule here
+	if r.id == "u2020"{
+		return true,nil
+	}else {
+		return false,nil
+	}
+}
+
+```
+
+### config access rule 
+look up more way to add rule [here](docs/rules.md)
+``` go
+grants := abac.GrantsType{
+    "role1": {
+        "resource1": {
+            "create:any": []abac.RuleType{&DemoRule{}},
+            "read:own":   abac.RulesType{},
+        },
+        "resource2": {
+            "create:any": []abac.RuleType{},
+            "update:own": []abac.RuleType{},
+        },
+    },
+}
+ac.Grant(grants)
+```
+### judge access rule
+``` go
+	resFail:=ac.CanAnd(abac.IQueryInfo{
+		Subject:  "role1",
+		Action:   "create:any",
+		Resource: "resource1",
+		Context:  DemoContext{"id":"u3030"},
+	})
+	if resFail==true{
+		t.Errorf("should fail")
+	}
+	resPass:=ac.CanAnd(abac.IQueryInfo{
+		Subject:  "role1",
+		Action:   "create:any",
+		Resource: "resource1",
+		Context:  DemoContext{"id":"u2020"},
+	})
+	if resPass==false{
+		t.Errorf("should pass")
+	}
 ```
 
 ## Related
