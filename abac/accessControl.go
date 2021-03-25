@@ -222,6 +222,22 @@ func (ac *AccessControl) Can(info IQueryInfo) (resc bool) {
 //		execute authorize handler
 //		get result
 // logic: and(if any rule failed, can = false)
-func (ac *AccessControl) CanAnd(info IQueryInfo) (can bool) {
+func (ac *AccessControl) CanAnd(info IQueryInfo) (can bool, err error) {
 	return andProcessRule(info.Context, ac.GetRules(info))
+}
+
+// CanOr  check related rule
+//		execute authorize handler
+//		get result
+// logic: or(if any rule passed, can = true)
+func (ac *AccessControl) CanOr(info IQueryInfo) (can bool, err error) {
+	return orProcessRule(info.Context, ac.GetRules(info))
+}
+
+// CanHandler  check related rule
+//		execute authorize handler
+//		get result
+// logic: or(if any rule passed, can = true)
+func (ac *AccessControl) CanHandler(info interface{}, handler func(info interface{}) (bool, error)) (can bool, err error) {
+	return handler(info)
 }
