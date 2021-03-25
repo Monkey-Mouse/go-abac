@@ -13,11 +13,14 @@ type ContextType interface {
 type DefaultContext map[string]interface{}
 
 func (c DefaultContext) Value(key interface{}) interface{} {
-	if c != nil {
-		return c[key.(string)]
-	} else {
-		return ""
+	if key == 0 {
+		return c
 	}
+	if keyAsString, ok := key.(string); ok {
+		val, _ := c[keyAsString]
+		return val
+	}
+	return nil
 }
 
 func processRule(ctx context.Context, rules RulesType) (pass bool) {
