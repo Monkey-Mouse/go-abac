@@ -339,3 +339,73 @@ func Test_processRule(t *testing.T) {
 		})
 	}
 }
+
+func Test_andProcessRule(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		rules RulesType
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantPass bool
+	}{
+		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
+			FailRule{},
+			FailRule{},
+			FooRule{},
+			FailRule{},
+		}}, wantPass: false},
+		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
+			FooRule{},
+			FooRule{},
+		}}, wantPass: true},
+		{name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
+			ErrRule{},
+			ErrRule{},
+		}}, wantPass: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotPass, err := andProcessRule(tt.args.ctx, tt.args.rules); gotPass != tt.wantPass {
+				t.Log(err)
+				t.Errorf("processRule() = %v, want %v", gotPass, tt.wantPass)
+			}
+		})
+	}
+}
+
+func Test_orProcessRule(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		rules RulesType
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantPass bool
+	}{
+		{name: "text process rule fail", args: args{ctx: context.TODO(), rules: []RuleType{
+			FailRule{},
+			FailRule{},
+			FailRule{},
+		}}, wantPass: false},
+		{name: "text process rule pass", args: args{ctx: context.TODO(), rules: []RuleType{
+			FailRule{},
+			FailRule{},
+			FooRule{},
+		}}, wantPass: true},
+		{name: "text process rule err", args: args{ctx: context.TODO(), rules: []RuleType{
+			ErrRule{},
+			ErrRule{},
+		}}, wantPass: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotPass, err := orProcessRule(tt.args.ctx, tt.args.rules); gotPass != tt.wantPass {
+				t.Log(err)
+				t.Errorf("processRule() = %v, want %v", gotPass, tt.wantPass)
+			}
+		})
+	}
+}
